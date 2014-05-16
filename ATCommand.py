@@ -4,15 +4,12 @@
     The transmission latency of the control commands is critical to the user
     experience. Those commands are to be sent on a regular basis
     (usually 30 times per second).
-    --> Main app must take charge
 
     According to tests, a satisfying control of the AR.Drone 2.0 is reached
     by sending the AT-commands every 30 ms for smooth drone movements
-    --> Main app must take charge
 
     To prevent the drone from considering the WIFI connection lost,
     two consecutive commands must be send within less than 2 seconds.
-    --> Main app must take charge. See NavData.COM_WATCHDOG_MASK
 """
 import threading
 import socket
@@ -28,10 +25,10 @@ class ATCommand:
             self._debug = debug
             self._sequence = 1
             self._socket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-            self._socket.setblocking(1)
             self._socket.settimeout(1.0)
         except Exception, e:
             # no cleanup code required
+            self._debug.Print(e)
             raise
 
     def _Lock(self):
@@ -49,6 +46,7 @@ class ATCommand:
             self._debug.Print(cmd)
         except Exception, e:
             # no cleanup code required
+            self._debug.Print(e)
             raise
         finally:
             self._Unlock()

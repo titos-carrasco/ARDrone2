@@ -23,9 +23,11 @@ class ARDrone2:
                 self._control = Control(self._address, self._DoControl, self._debug)
             except Exception, e:
                 self._navData.Stop()
+                self._debug.Print(e)
                 raise
         except Exception, e:
             # no cleanup code required
+            self._debug.Print(e)
             raise
         t = time.time()
         while(self._droneState == None):

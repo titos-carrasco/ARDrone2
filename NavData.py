@@ -11,10 +11,12 @@ class NavData:
     NAVDATA_PORT = 5554
 
     UNEXPECTED_EXCEPTION = 1
-    SMALL_PACKET = 2
-    BAD_HEADER = 3
-    SOCKET_TIMEOUT = 4
-    CHECKSUM_ERROR = 5
+    SOCKET_TIMEOUT = 2
+    SMALL_PACKET = 3
+    BAD_HEADER = 4
+    BAD_CKS_TAG = 5
+    CHECKSUM_ERROR = 6
+    BAD_SEQUENCE = 7
 
     FLY_MASK            = 1 << 0  #FLY MASK : (0) ardrone is landed, (1) ardrone is flying */
     VIDEO_MASK          = 1 << 1  #VIDEO MASK : (0) video disable, (1) video enable */
@@ -54,15 +56,16 @@ class NavData:
             self._address = address
             self._callback = callback
             self._debug = debug
+            self._sequenceNumber = 0
             self._socket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
             self._socket.bind(('', NavData.NAVDATA_PORT))
-            self._socket.setblocking(1)
             self._socket.settimeout(1.0)
             self._socket.sendto(
                     "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
                     (self._address, NavData.NAVDATA_PORT))
         except Exception, e:
             # no cleanup code required
+            self._debug.Print(e)
             raise
         self._running = True
         self._tnavdata = threading.Thread(target=self._TNavData, args=(), name="NavData")
@@ -83,22 +86,28 @@ class NavData:
                     self._callback(NavData.SMALL_PACKET, 0)
                     continue
                 header = self._Unpack32(packet[0:4])
-                if(header != 0x55667788):
-                    self._callback(NavData.BAD_HEADER, 0)
-                    continue
                 droneState = self._Unpack32(packet[4:8])
                 sequenceNumber = self._Unpack32(packet[8:12])
                 visionFlag = self._Unpack32(packet[12:16])
                 cksId = self._Unpack16(packet[plen-8:plen-6])
                 size = self._Unpack16(packet[plen-6:plen-4])
                 cksData = self._Unpack16(packet[plen-4:plen])
-                if(cksData != sum(map(ord, packet[:plen-8]))):
+
+                if(cksId != 0xFFFF):
+                    self._callback(NavData.BAD_CKS_TAG, 0)
+                elif(cksData != sum(map(ord, packet[:plen-8]))):
                     self._callback(NavData.CHECKSUM_ERROR, 0)
-                    continue
-                self._callback(0, droneState)
+                elif(header != 0x55667788 and header != 0x55667789):
+                    self._callback(NavData.BAD_HEADER, 0)
+                elif(sequenceNumber<self._sequenceNumber):
+                    self._callback(NavData.BAD_SEQUENCE, 0)
+                else:
+                    self._sequenceNumber = sequenceNumber
+                    self._callback(0, droneState)
             except socket.timeout :
                 self._callback(NavData.SOCKET_TIMEOUT, 0)
             except Exception, e:
+                self._debug.Print(e)
                 self._callback(NavData.UNEXPECTED_EXCEPTION, 0)
 
     def Stop(self):

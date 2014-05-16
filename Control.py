@@ -15,10 +15,11 @@ class Control:
             self._debug = debug
             self._socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
             self._socket.bind(('', Control.CONTROL_PORT))
-            self._socket.listen(5)
-            self._socket.setblocking(1)
-            #self._socket.settimeout(0)
+            self._socket.listen(1)
+            self._socket.settimeout(None)
         except Exception, e:
+            # no cleanup code required
+            self._debug.Print(e)
             raise
         self._running = True
         self._tcontrol = threading.Thread(target=self._TControl, args=(), name="Control")
@@ -33,10 +34,11 @@ class Control:
                 while(True):
                     d = conn.recv(4096)
                     if(not d):
-                        break;
+                        break
                     data = data + d
                 self._control(data)
             except Exception, e:
+                #self._debug.Print(e)
                 pass
             if(conn != None):
                 conn.close()
