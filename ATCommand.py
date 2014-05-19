@@ -1,18 +1,8 @@
 # -*- coding: utf-8 -*-
-"""AT Commands for the Parrot ARDrone2
-
-    The transmission latency of the control commands is critical to the user
-    experience. Those commands are to be sent on a regular basis
-    (usually 30 times per second).
-
-    According to tests, a satisfying control of the AR.Drone 2.0 is reached
-    by sending the AT-commands every 30 ms for smooth drone movements
-
-    To prevent the drone from considering the WIFI connection lost,
-    two consecutive commands must be send within less than 2 seconds.
+"""Send AT commands to the ARDrone2
 """
-import threading
 import socket
+import threading
 import struct
 
 class ATCommand:
@@ -28,7 +18,7 @@ class ATCommand:
             self._socket.settimeout(1.0)
         except Exception, e:
             # no cleanup code required
-            self._debug.Print(e)
+            debug.Print("[ATCommand]: %s" % e)
             raise
 
     def _Lock(self):
@@ -43,15 +33,18 @@ class ATCommand:
             cmd = cmd.replace("{SEQ}", str(self._sequence)) + chr(13)
             self._sequence = self._sequence + 1
             self._socket.sendto(cmd, (self._address, ATCommand.AT_PORT))
-            self._debug.Print(cmd)
+            #self._debug.Print("[ATCommand]: %s" % cmd)
         except Exception, e:
             # no cleanup code required
-            self._debug.Print(e)
+            self._debug.Print("ATCommand]: %s - %s" % (cmd, e))
             raise
         finally:
             self._Unlock()
 
     def _FloatToInt(self, f):
+        """
+        Floating-point parameters must be send like 32 bit integers (union)
+        """
         return struct.unpack(">i", struct.pack(">f",f))[0]
 
     # AT*CTRL=%d,%d,%d\r
@@ -65,7 +58,7 @@ class ATCommand:
     def GetConfig(self):
         """
         Send active configuration file to a client through the 'control'
-        socket UDP 5559
+        socket TCP 5559
         """
         cmd = "AT*CTRL={SEQ},4,0"
         self._SendCommand(cmd)
@@ -73,6 +66,7 @@ class ATCommand:
     def ClearCommandAck(self):
         """
         Reset command mask in navdata
+        Some commands must wait for this bit in navdata
         """
         cmd = "AT*CTRL={SEQ},5,0"
         self._SendCommand(cmd)
@@ -86,13 +80,18 @@ class ATCommand:
 
     # AT*COMWDG=%d\r
     def WatchDog(self):
+        """
+        To prevent the drone from considering the WIFI connection lost,
+        two consecutive commands must be send within less than 2 seconds.
+        You must send it when COM_WATCHDOG_MASK is active in navdata
+        """
         cmd = "AT*COMWDG={SEQ}"
         self._SendCommand(cmd)
 
     # AT*REF=%d,%d\r
     def TakeOff(self):
         """ Take-off
-        Send this command until navdata shows it.
+        Send this command until navdata (FLY_MASK) shows it.
         """
         ctrl = 0b10001010101000000000000000000 | 0b1000000000
         cmd = "AT*REF={SEQ},%d" % ctrl
@@ -100,7 +99,7 @@ class ATCommand:
 
     def Land(self):
         """ Land
-        Send this command until navdata shows it.
+        Send this command until navdata (FLY_MASK) shows it.
         Send as  a safety whenever an abnormal situation is detected
         """
         ctrl = 0b10001010101000000000000000000 | 0b0000000000
@@ -124,6 +123,14 @@ class ATCommand:
         pass
 
     # AT*PCMD=%d,%d,%d,%d,%d,%d\r
+    """
+    The transmission latency of the control commands is critical to the user
+    experience. Those commands are to be sent on a regular basis
+    (usually 30 times per second).
+
+    According to tests, a satisfying control of the AR.Drone 2.0 is reached
+    by sending the AT-commands every 30 ms for smooth drone movements
+    """
     def Hover(self):
         cmd = "AT*PCMD={SEQ},0,0,0,0,0"
         self._SendCommand(cmd)
@@ -155,6 +162,7 @@ class ATCommand:
     def FlatTrim(self):
         """ Flat Trim
         This command must not be sent when the ARDrone is flying
+        See FLY_MASK in navdata
         """
         cmd = "AT*FTRIM={SEQ}"
         self._SendCommand(cmd)
@@ -163,6 +171,7 @@ class ATCommand:
     def Calibrate(self):
         """ Magnetrometer calibration
         This command must be sent when the ARDrone is flying
+        See FLY_MASK in navdata
         """
         cmd = "AT*CALIB={SEQ},0"
         self._SendCommand(cmd)

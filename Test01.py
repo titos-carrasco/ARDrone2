@@ -4,33 +4,32 @@
 import time
 import threading
 
+from Debug import Debug
 from ARDrone2 import ARDrone2
 
+debug = Debug()
 drone=None
 try:
-    drone = ARDrone2("192.168.1.1")
+    drone = ARDrone2("192.168.1.1", debug)
 except Exception, e:
-    print "Init Error. May be Drone's hostname/address is wrong..."
+    debug.Print("[MainApp]: No connection to ARDrone2. May be Drone's hostname/address is wrong...")
 
 if(drone!=None):
     drone.SetNavData()
     #drone.Emergency()
     #time.sleep(2)
-    #drone.EmergencyReset()
+    drone.EmergencyReset()
     drone.FlatTrim()
-    drone.GetConfig()
+    print drone.GetConfig()
     #drone.TakeOff()
-    #time.sleep(5)
+    #time.sleep(3)
     #drone.Calibrate()
-    #drone.Land()
-    drone.LedsAnim(1, 10, 2)
-    time.sleep(2)
+    #drone.LedsAnim(1, 10, 2)
+    #time.sleep(2)
     drone.LedsAnim(2, 10, 2)
     time.sleep(2)
-    drone.LedsAnim(3, 10, 2)
-    time.sleep(2)
-    drone.LedsAnim(4, 10, 2)
-    time.sleep(2)
-    print "Saliendo..."
+    #drone.LedsAnim(1, 10, 2)
+    #time.sleep(4)
+    #drone.Land()
     drone.Stop()
     print threading.enumerate()

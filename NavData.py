@@ -10,13 +10,22 @@ import threading
 class NavData:
     NAVDATA_PORT = 5554
 
-    UNEXPECTED_EXCEPTION = 1
-    SOCKET_TIMEOUT = 2
-    SMALL_PACKET = 3
-    BAD_HEADER = 4
-    BAD_CKS_TAG = 5
-    CHECKSUM_ERROR = 6
-    BAD_SEQUENCE = 7
+    ERR_UNEXPECTED_EXCEPTION = 1
+    ERR_SOCKET_TIMEOUT = 2
+    ERR_SMALL_PACKET = 3
+    ERR_BAD_HEADER = 4
+    ERR_BAD_CKS_TAG = 5
+    ERR_CHECKSUM = 6
+    ERR_BAD_SEQUENCE = 7
+
+    ERR_MESSAGE = [0]*8
+    ERR_MESSAGE[ERR_UNEXPECTED_EXCEPTION] = "Unexpected Exception"
+    ERR_MESSAGE[ERR_SOCKET_TIMEOUT] = "Socket Timeout"
+    ERR_MESSAGE[ERR_SMALL_PACKET] = "Small Packet"
+    ERR_MESSAGE[ERR_BAD_HEADER] = "Bad Header"
+    ERR_MESSAGE[ERR_BAD_CKS_TAG] = "Bad Checksum Tag"
+    ERR_MESSAGE[ERR_CHECKSUM] = "Bad Checksum"
+    ERR_MESSAGE[ERR_BAD_SEQUENCE] = "Bad Sequence Number"
 
     FLY_MASK            = 1 << 0  #FLY MASK : (0) ardrone is landed, (1) ardrone is flying */
     VIDEO_MASK          = 1 << 1  #VIDEO MASK : (0) video disable, (1) video enable */
@@ -57,6 +66,7 @@ class NavData:
             self._callback = callback
             self._debug = debug
             self._sequenceNumber = 0
+            self._running = False
             self._socket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
             self._socket.bind(('', NavData.NAVDATA_PORT))
             self._socket.settimeout(1.0)
@@ -65,7 +75,7 @@ class NavData:
                     (self._address, NavData.NAVDATA_PORT))
         except Exception, e:
             # no cleanup code required
-            self._debug.Print(e)
+            debug.Print("[NavData]: %s" % e)
             raise
         self._running = True
         self._tnavdata = threading.Thread(target=self._TNavData, args=(), name="NavData")
@@ -83,7 +93,7 @@ class NavData:
                 packet, addr = self._socket.recvfrom(4096)
                 plen = len(packet)
                 if(plen<24):
-                    self._callback(NavData.SMALL_PACKET, 0)
+                    self._callback(NavData.ERR_SMALL_PACKET, 0)
                     continue
                 header = self._Unpack32(packet[0:4])
                 droneState = self._Unpack32(packet[4:8])
@@ -94,21 +104,21 @@ class NavData:
                 cksData = self._Unpack16(packet[plen-4:plen])
 
                 if(cksId != 0xFFFF):
-                    self._callback(NavData.BAD_CKS_TAG, 0)
+                    self._callback(NavData.ERR_BAD_CKS_TAG, 0)
                 elif(cksData != sum(map(ord, packet[:plen-8]))):
-                    self._callback(NavData.CHECKSUM_ERROR, 0)
+                    self._callback(NavData.ERR_CHECKSUM, 0)
                 elif(header != 0x55667788 and header != 0x55667789):
-                    self._callback(NavData.BAD_HEADER, 0)
+                    self._callback(NavData.ERR_BAD_HEADER, 0)
                 elif(sequenceNumber<self._sequenceNumber):
-                    self._callback(NavData.BAD_SEQUENCE, 0)
+                    self._callback(NavData.ERR_BAD_SEQUENCE, 0)
                 else:
                     self._sequenceNumber = sequenceNumber
                     self._callback(0, droneState)
             except socket.timeout :
-                self._callback(NavData.SOCKET_TIMEOUT, 0)
+                self._callback(NavData.ERR_SOCKET_TIMEOUT, 0)
             except Exception, e:
-                self._debug.Print(e)
-                self._callback(NavData.UNEXPECTED_EXCEPTION, 0)
+                self._callback(NavData.ERR_UNEXPECTED_EXCEPTION, 0)
+                self._debug.Print("[TNavData]: %s" % e)
 
     def Stop(self):
         if(self._running):
