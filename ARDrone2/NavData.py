@@ -1,15 +1,23 @@
 # -*- coding: utf-8 -*-
-"""Receive NAVDATA from the ARDrone2
-
-Send "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" for the first
-time. The Drone wil connect only to this client
-"""
 import socket
 import threading
+import time
 
 class NavData:
+    """Class to receive NavData from port 5554
+
+    Usage:
+        def callback(droneState):
+            ... process parameters
+
+        debug = Debug()
+        navdata = NavData("192.168.1.1", callback, debug)
+        ...
+        navdata.Stop()
+    """
     NAVDATA_PORT = 5554
 
+    # Class errors
     ERR_UNEXPECTED_EXCEPTION = 1
     ERR_SOCKET_TIMEOUT = 2
     ERR_SMALL_PACKET = 3
@@ -27,6 +35,7 @@ class NavData:
     ERR_MESSAGE[ERR_CHECKSUM] = "Bad Checksum"
     ERR_MESSAGE[ERR_BAD_SEQUENCE] = "Bad Sequence Number"
 
+    # Drone State
     FLY_MASK            = 1 << 0  #FLY MASK : (0) ardrone is landed, (1) ardrone is flying */
     VIDEO_MASK          = 1 << 1  #VIDEO MASK : (0) video disable, (1) video enable */
     VISION_MASK         = 1 << 2  #VISION MASK : (0) vision disable, (1) vision enable */
@@ -61,39 +70,62 @@ class NavData:
     EMERGENCY_MASK      = 1 << 31  #Emergency landing : (0) no emergency, (1) emergency */
 
     def __init__(self, address, callback, debug):
+        """Constructor
+
+        Send "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" for
+        the first time. The Drone wil connect only to this client
+
+        Args:
+            adress: Drone's address/hostname
+            callback: Method to call when receive NavData.
+                      def callback(droneState):
+                         ...
+            debug: Debug object
+
+        Throws:
+            Any exception throws by socket.sendto()
+        """
+        self._address = address
+        self._callback = callback
+        self._debug = debug
+        self._sequenceNumber = 0
+        self._socket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+        self._socket.bind(('', NavData.NAVDATA_PORT))
+        self._socket.settimeout(1.0)
         try:
-            self._address = address
-            self._callback = callback
-            self._debug = debug
-            self._sequenceNumber = 0
-            self._running = False
-            self._socket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-            self._socket.bind(('', NavData.NAVDATA_PORT))
-            self._socket.settimeout(1.0)
             self._socket.sendto(
-                    "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
-                    (self._address, NavData.NAVDATA_PORT))
-        except Exception, e:
+                "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
+                (self._address, NavData.NAVDATA_PORT))
+        except Exception as e:
             # no cleanup code required
-            debug.Print("[NavData]: %s" % e)
+            self._debug.Print("[NavData]: %s" % e)
             raise
-        self._running = True
-        self._tnavdata = threading.Thread(target=self._TNavData, args=(), name="NavData")
+        self._running = False
+        self._tnavdata = threading.Thread(target=self._TNavData, args=(), name="TNavData")
         self._tnavdata.start()
+        while(not self._running):
+            time.sleep(0.01)
 
     def _Unpack32(self, s):
+        """Convert 32bit drone integer to normal 32bit integer
+        """
         return (ord(s[3])<<24) + (ord(s[2])<<16) + (ord(s[1])<<8) + (ord(s[0])<<0)
 
     def _Unpack16(self, s):
+        """Convert 16bit drone's integer to norma 16bit integer
+        """
         return (ord(s[1])<<8) + (ord(s[0])<<0)
 
     def _TNavData(self, *args):
+        """Thread to receive the NavData from the drone
+        """
+        self._running = True
         while(self._running):
             try:
-                packet, addr = self._socket.recvfrom(4096)
+                packet, addr = self._socket.recvfrom(65535)
                 plen = len(packet)
                 if(plen<24):
-                    self._callback(NavData.ERR_SMALL_PACKET, 0)
+                    self._debug.Print("[TNavData]: Error - %s" % NavData.ERR_MESSAGE[NavData.ERR_SMALL_PACKET])
                     continue
                 header = self._Unpack32(packet[0:4])
                 droneState = self._Unpack32(packet[4:8])
@@ -104,23 +136,25 @@ class NavData:
                 cksData = self._Unpack16(packet[plen-4:plen])
 
                 if(cksId != 0xFFFF):
-                    self._callback(NavData.ERR_BAD_CKS_TAG, 0)
+                    self._debug.Print("[TNavData]: Error - %s" % NavData.ERR_MESSAGE[NavData.ERR_BAD_CKS_TAG])
                 elif(cksData != sum(map(ord, packet[:plen-8]))):
-                    self._callback(NavData.ERR_CHECKSUM, 0)
+                    self._debug.Print("[TNavData]: Error - %s" % NavData.ERR_MESSAGE[NavData.ERR_CHECKSUM])
                 elif(header != 0x55667788 and header != 0x55667789):
-                    self._callback(NavData.ERR_BAD_HEADER, 0)
+                    self._debug.Print("[TNavData]: Error - %s" % NavData.ERR_MESSAGE[NavData.ERR_BAD_HEADER])
                 elif(sequenceNumber<self._sequenceNumber):
-                    self._callback(NavData.ERR_BAD_SEQUENCE, 0)
+                    self._debug.Print("[TNavData]: Error - %s" % NavData.ERR_MESSAGE[NavData.ERR_BAD_SEQUENCE])
                 else:
                     self._sequenceNumber = sequenceNumber
-                    self._callback(0, droneState)
+                    self._callback(droneState)
             except socket.timeout :
-                self._callback(NavData.ERR_SOCKET_TIMEOUT, 0)
-            except Exception, e:
-                self._callback(NavData.ERR_UNEXPECTED_EXCEPTION, 0)
+                self._debug.Print("[TNavData]: Error - %s" % NavData.ERR_MESSAGE[NavData.ERR_SOCKET_TIMEOUT])
+            except Exception as e:
                 self._debug.Print("[TNavData]: %s" % e)
+                self._debug.Print("[TNavData]: Error - %s" % NavData.ERR_MESSAGE[NavData.ERR_UNEXPECTED_EXCEPTION])
+        self._debug.Print("[TNavData]: Aborting the thread")
 
     def Stop(self):
-        if(self._running):
-            self._running = False
-            self._tnavdata.join()
+        """Stop NavData thread
+        """
+        self._running = False
+        self._tnavdata.join()
