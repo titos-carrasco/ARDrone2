@@ -289,6 +289,30 @@ class ARDrone2:
         finally:
             self._Unlock()
 
+    def Move(self, roll, pitch, gaz, yaw):
+        try:
+            self._Lock()
+            if(self._IsSet(NavData.FLY_MASK)):
+                self._atCommand.Move(roll, pitch, gaz, yaw)
+        except Exception as e:
+            # no cleanup code required
+            self._debug.Print("[ARDrone2]: Move: %s" % e)
+            raise
+        finally:
+            self._Unlock()
+
+    def Hover(self):
+        try:
+            self._Lock()
+            if(self._IsSet(NavData.FLY_MASK)):
+                self._atCommand.Hover()
+        except Exception as e:
+            # no cleanup code required
+            self._debug.Print("[ARDrone2]: Hover: %s" % e)
+            raise
+        finally:
+            self._Unlock()
+
     def Stop(self):
         """"Stop all the threads
         """

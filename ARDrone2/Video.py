@@ -45,10 +45,8 @@ class Video:
         try:
             self._tps = cv2.getTickFrequency()
             self._cap = cv2.VideoCapture("tcp://%s:%d" % (address, Video.VIDEO_PORT))
-            self._imgW = 320
-            self._imgH = 240
-            self._cap.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, self._imgH)
-            self._cap.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, self._imgW)
+            #self._cap.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, 720)
+            #self._cap.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, 480)
             ret, img = self._cap.read()
             if(not ret):
                 msg = "Can't read video from the drone"
@@ -75,13 +73,18 @@ class Video:
         """Thread to process the video from the drone
         """
         self._running = True
+        t1=cv2.getTickCount()
         while(self._running):
             try:
                 ret, img = self._cap.read()
                 if(ret):
                     frame = cv2.flip(img,1)
                     frame = self._callback(frame)
+                    imgH, imgW, depth = img.shape
+                    t2=cv2.getTickCount()
+                    cv2.putText(frame, "%04.2f FPS" % (1/((t2-t1)/self._tps)), (10, imgH-10), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255))
                     cv2.imshow(self._winName, frame)
+                    t1=t2
                 cv2.waitKey(1)
             except Exception as e:
                 self._debug.Print("[TVideo]: %s" % e)

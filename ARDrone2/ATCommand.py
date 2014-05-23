@@ -243,7 +243,7 @@ class ATCommand:
         """Set mode for the data to send in the NavData port (5554)
 
         Args:
-            Full: If, few data is send by the drone
+            Full: If false few data is send by the drone
         """
         if(Full):
             flag = "FALSE"
