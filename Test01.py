@@ -76,7 +76,6 @@ class Main:
                 if(flyRoll==0 and flyPitch==0 and flyYaw==0 and flyGaz==0):
                     drone.Hover()
                 else:
-                    print (flyRoll, flyPitch, flyGaz, flyYaw)
                     drone.Move(flyRoll, flyPitch, flyGaz, flyYaw)
 
                 time.sleep(0.01)

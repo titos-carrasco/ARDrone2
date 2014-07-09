@@ -7,7 +7,7 @@ class NavData:
     """Class to receive NavData from port 5554
 
     Usage:
-        def callback(droneState):
+        def callback(droneState, options):
             ... process parameters
 
         debug = Debug()
@@ -25,8 +25,9 @@ class NavData:
     ERR_BAD_CKS_TAG = 5
     ERR_CHECKSUM = 6
     ERR_BAD_SEQUENCE = 7
+    ERR_BAD_OPTIONS = 8
 
-    ERR_MESSAGE = [0]*8
+    ERR_MESSAGE = [0]*9
     ERR_MESSAGE[ERR_UNEXPECTED_EXCEPTION] = "Unexpected Exception"
     ERR_MESSAGE[ERR_SOCKET_TIMEOUT] = "Socket Timeout"
     ERR_MESSAGE[ERR_SMALL_PACKET] = "Small Packet"
@@ -34,6 +35,7 @@ class NavData:
     ERR_MESSAGE[ERR_BAD_CKS_TAG] = "Bad Checksum Tag"
     ERR_MESSAGE[ERR_CHECKSUM] = "Bad Checksum"
     ERR_MESSAGE[ERR_BAD_SEQUENCE] = "Bad Sequence Number"
+    ERR_MESSAGE[ERR_BAD_OPTIONS] = "Bad Options Blocks"
 
     # Drone State
     FLY_MASK            = 1 << 0  #FLY MASK : (0) ardrone is landed, (1) ardrone is flying */
@@ -144,8 +146,48 @@ class NavData:
                 elif(sequenceNumber<self._sequenceNumber):
                     self._debug.Print("[TNavData]: Error - %s" % NavData.ERR_MESSAGE[NavData.ERR_BAD_SEQUENCE])
                 else:
+                    options = []
+                    idx = 16
+                    lastb = plen - 8
+                    while(idx < lastb):
+                        opt_id = self._Unpack16(packet[idx:idx+2])
+                        opt_size = self._Unpack16(packet[idx+2:idx+4])
+                        opt_data = packet[idx+4:idx+(opt_size-4)]
+                        idx = idx + opt_size
+                        # Needs to parse opt_data. See navdata_demo.h in API
+                        #    navdata_demo_t
+                        #    navdata_cks_t
+                        #    navdata_time_t
+                        #    navdata_raw_measures:t
+                        #    navdata_magneto_t
+                        #    navdata_wind_speed_t
+                        #    navdata_kalman_pressure_t
+                        #    navdata_zimmu_3000_t
+                        #    navdata_phys_measures_t
+                        #    navdata_gyros_offsets_t
+                        #    navdata_euler_angles_t
+                        #    navdata_references_t
+                        #    navdata_trims_t
+                        #    navdata_rc_references_t
+                        #    navdata_pwm_t
+                        #    navdata_altitude_t
+                        #    navdata_vision_raw_t
+                        #    navdata_vision_t
+                        #    navdata_vision_perf_t
+                        #    navdata_trackers_send_t
+                        #    navdata_vision_detect_t
+                        #    navdata_vision_of_t
+                        #    navdata_watchdog_t
+                        #    navdata_adc_data_frame_t
+                        #    navdata_video_stream_t
+                        #    navdata_hdvideo_stream_t
+                        #    navdata_games_t
+                        #    navdata_wifi_t
+                        options.append(opt_data)
+                    if(idx!=lastb):
+                        self._debug.Print("[TNavData]: Error - %s" % NavData.ERR_MESSAGE[NavData.ERR_BAD_OPTIONS])
                     self._sequenceNumber = sequenceNumber
-                    self._callback(droneState)
+                    self._callback(droneState, options)
             except socket.timeout :
                 self._debug.Print("[TNavData]: Error - %s" % NavData.ERR_MESSAGE[NavData.ERR_SOCKET_TIMEOUT])
             except Exception as e:

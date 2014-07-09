@@ -6,7 +6,7 @@ Python Code for the Parrot ARDrone2:
 * Show video using Comupter Vision (cv2) and Numpy
 * Add callback to preprocessing the frame. Example with Canny
 * Pitch, Roll, Yaw and Gaz with the joystick (need joystick with
-  four axes and twelve buttons
+  four axes and twelve buttons)
     * Flat Trim: button 5
     * Calibrate magnetromes: button 6
     * Emergency: button 7
@@ -15,9 +15,28 @@ Python Code for the Parrot ARDrone2:
     * Take Off: button 10 (start)
     * Pitch, Roll: axis 1 and 2
     * Gaz, Yaw: axis 3 and 4
+* TODO
+    * Implement AT Commands listed at the end of ATCommand.py
+    * Implement Config commands listed in the Developer Guide Chapter 8
+    * Parse Options blocks in NavData
+
 
 ChangeLog
 =========
+08 Jul 2014
+
+* ATCommand.py
+    * Add SetARDroneName()
+
+* NavData.py
+    * Parse options blocks
+
+* ARDrone2.py
+    * Add Options blocks data
+    * Add SetARDroneName()
+    * If videoCallback is null then no video is processed
+
+
 22 May 2014
 
 * ATCommand.py

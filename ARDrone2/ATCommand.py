@@ -6,11 +6,19 @@ import struct
 class ATCommand:
     """Class to send AT commands to the ARDrone2 through port 5556
 
+    To prevent the drone from considering the WIFI connection lost,
+    two consecutive commands must be send within less than 2 seconds.
+
     Usage:
+        import time
+
         debug = Debug()
         drone = ATCommand("192.168.1.1", debug)
         drone.TakeOff()
-        time.sleep(5)
+        time.sleep(1)
+        for t in range(5):
+            drone.WatchDog()
+            time.sleep(1)
         drone.Land()
     """
     AT_PORT = 5556
@@ -239,17 +247,25 @@ class ATCommand:
         cmd = "AT*CONFIG={SEQ},\"%s\",\"%s\"" % (option, value)
         self._SendCommand(cmd)
 
-    def SetNavData(self, Full=False):
+    def SetNavData(self, full=False):
         """Set mode for the data to send in the NavData port (5554)
 
         Args:
-            Full: If false few data is send by the drone
+            full: If false, few data is sent by the drone
         """
-        if(Full):
+        if(full):
             flag = "FALSE"
         else:
             flag = "TRUE"
         self._Config("general:navdata_demo", flag)
+
+    def SetARDroneName(self, name):
+        """ Set the name of the ARDrone, and is not related to SSID name
+
+        Args:
+            name: the name for the ARDrone
+        """
+        self._Config("general:ardrone_name", name)
 
     # AT*LED=%d,%d,%d,%d\r
     def LedsAnim(self, anim, frecuency, duration):
@@ -264,53 +280,55 @@ class ATCommand:
         self._SendCommand(cmd)
 
     """
-    AT*PMODE=%d,%d\r
-    AT*MISC=%d,%d,%d,%d,%d\r
-    AT*GAIN=%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\r
-    AT*ANIM=%d,%d,%d\r
-    AT*VISP=%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\r
-    AT*VISO=%d,%d\r
-    AT*CAP=%d,%d,%d\r
-    AT*ZAP=%d,%d\r
-    AT*CAD=%d,%d,%d\r
-    AT*MTRIM=%d,%d,%d,%d\r
-    AT*POL=%d,%d,%d,%d,%d,%d\r
-    AT*CONFIG_IDS=%d,\"%s\",\"%s\",\"%s\"\r
-    AT*PWM=%d,%d,%d,%d,%d\r
-    AT*AFLIGHT=%d,%d\r
-    AT*VICON=%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\r
-    AT*PR\r
-    AT*PM\r
-    AT*PM=!%d\r
-    AT*PM=?\r
-    AT*PM?\r
-    AT*PM=%d,%d\r
-    AT*PM!\r
-    AT*PL\r
-    AT*PL=!%d\r
-    AT*PL=?\r
-    AT*PL?\r
-    AT*PL=%d\r
-    AT*PAVS=?\r
-    AT*PAVS?\r
-    AT*PAVS=%d[,\"%s\"]\r
-    AT*PAVI=?\r
-    AT*PAVI?\r
-    AT*PAVI=%l{[%d]}\r
-    AT*PAO=?\r
-    AT*PAO?\r
-    AT*PAO=%d[,\"%s\"]\r
-    AT*PCC=?\r
-    AT*PCC?\r
-    AT*PCC=[%d],[%d]\r
-    AT*PCS=?\r
-    AT*PCS?\r
-    AT*PCS=%l{[%d]}\r
-    AT*SDT\r
-    AT*PIP=%d\r
-    AT*PII=%d\r
-    AT*PID=%d\r
-    AT*DEM\r
-    AT*INM\r
-    AT*RSS=%d:%d:%d:%d:%d:%d\r
+    TODO:
+        Config commands in chapter 8 - Developer Guide
+        AT*PMODE=%d,%d\r
+        AT*MISC=%d,%d,%d,%d,%d\r
+        AT*GAIN=%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\r
+        AT*ANIM=%d,%d,%d\r
+        AT*VISP=%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\r
+        AT*VISO=%d,%d\r
+        AT*CAP=%d,%d,%d\r
+        AT*ZAP=%d,%d\r
+        AT*CAD=%d,%d,%d\r
+        AT*MTRIM=%d,%d,%d,%d\r
+        AT*POL=%d,%d,%d,%d,%d,%d\r
+        AT*CONFIG_IDS=%d,\"%s\",\"%s\",\"%s\"\r
+        AT*PWM=%d,%d,%d,%d,%d\r
+        AT*AFLIGHT=%d,%d\r
+        AT*VICON=%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\r
+        AT*PR\r
+        AT*PM\r
+        AT*PM=!%d\r
+        AT*PM=?\r
+        AT*PM?\r
+        AT*PM=%d,%d\r
+        AT*PM!\r
+        AT*PL\r
+        AT*PL=!%d\r
+        AT*PL=?\r
+        AT*PL?\r
+        AT*PL=%d\r
+        AT*PAVS=?\r
+        AT*PAVS?\r
+        AT*PAVS=%d[,\"%s\"]\r
+        AT*PAVI=?\r
+        AT*PAVI?\r
+        AT*PAVI=%l{[%d]}\r
+        AT*PAO=?\r
+        AT*PAO?\r
+        AT*PAO=%d[,\"%s\"]\r
+        AT*PCC=?\r
+        AT*PCC?\r
+        AT*PCC=[%d],[%d]\r
+        AT*PCS=?\r
+        AT*PCS?\r
+        AT*PCS=%l{[%d]}\r
+        AT*SDT\r
+        AT*PIP=%d\r
+        AT*PII=%d\r
+        AT*PID=%d\r
+        AT*DEM\r
+        AT*INM\r
+        AT*RSS=%d:%d:%d:%d:%d:%d\r
     """

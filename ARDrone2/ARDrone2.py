@@ -62,8 +62,11 @@ class ARDrone2:
         try:
             debug.Print("[ARDrone2]: Init Video Object")
             self._video = None
-            self._video = Video(address, self._doVideo, debug)
-            debug.Print("[ARDrone2]: Video Object OK")
+            if(self._videoCallback!=None):
+                self._video = Video(address, self._DoVideo, debug)
+                debug.Print("[ARDrone2]: Video Object OK")
+            else:
+                debug.Print("[ARDrone2]: No Video Object")
         except Exception as e:
             # no cleanup code required
             debug.Print("[ARDrone2]: %s" % e)
@@ -105,10 +108,11 @@ class ARDrone2:
             time.sleep(ARDrone2.COMMAND_DELAY)
 
     # from NavData
-    def _DoNavData(self, droneState):
+    def _DoNavData(self, droneState, options):
         """Method to receive the navdata
         """
         self._droneState = droneState
+        self._options = options
 
     def _TMonitor(self):
         """Thread to monitor the watchdog mask and process alerts
@@ -126,7 +130,7 @@ class ARDrone2:
 
             # Alerts
             if(self._navdataCallback != None):
-                self._navdataCallback(self._navdataState)
+                self._navdataCallback(self._droneState, self._options)
             else:
                 if(self._IsSet(NavData.COMMAND_MASK)):
                     self._debug.Print("[TMonitor]: NavData Flag - ACK Received")
@@ -153,13 +157,10 @@ class ARDrone2:
         self._debug.Print("[TMonitor]: Aborting the thread")
 
     # from Video
-    def _doVideo(self, frame):
+    def _DoVideo(self, frame):
         """Method to receive the frame
         """
-        if(self._videoCallback):
-            return self._videoCallback(frame)
-        else:
-            return frame
+        return self._videoCallback(frame)
 
     def GetDroneState(self):
         """Get the drone state
@@ -170,6 +171,8 @@ class ARDrone2:
         return self._droneState
 
     def SetNavData(self):
+        """Set navdata mode
+        """
         try:
             self._Lock()
             self._ClearACK()
@@ -179,6 +182,22 @@ class ARDrone2:
         except Exception as e:
             # no cleanup code required
             self._debug.Print("[ARDrone2]: SetNavData - %s" % e)
+            raise
+        finally:
+            self._Unlock()
+
+    def SetARDroneName(name):
+        """Set drone name
+
+        Args:
+            name: drone name
+        """
+        try:
+            self._Lock()
+            self._atCommand.SetARDroneName(name)
+        except Exception as e:
+            # no cleanup code required
+            self._debug.Print("[ARDrone2]: SetARDroneName - %s" % e)
             raise
         finally:
             self._Unlock()
