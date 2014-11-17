@@ -16,7 +16,7 @@ class Video:
         debug = Debug()
         video = Video("192.168.1.1", callback, debug)
         ...
-        Video.Stop()
+        video.Stop()
     """
     VIDEO_PORT = 5555
 
@@ -84,8 +84,8 @@ class Video:
                     t2=cv2.getTickCount()
                     cv2.putText(frame, "%04.2f FPS" % (1/((t2-t1)/self._tps)), (10, imgH-10), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255))
                     cv2.imshow(self._winName, frame)
+                    cv2.waitKey(1)
                     t1=t2
-                cv2.waitKey(1)
             except Exception as e:
                 self._debug.Print("[TVideo]: %s" % e)
                 self._debug.Print("[TVideo]: Error - %s" % Video.ERR_MESSAGE[Video.ERR_UNEXPECTED_EXCEPTION])

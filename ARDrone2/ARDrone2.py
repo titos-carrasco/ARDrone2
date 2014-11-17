@@ -2,7 +2,6 @@
 import threading
 import time
 
-from Debug import Debug
 from ATCommand import ATCommand
 from NavData import NavData
 from Control import Control

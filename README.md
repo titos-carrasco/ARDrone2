@@ -1,57 +1,63 @@
 ARDrone2
 ========
 
-Python Code for the Parrot ARDrone2:
+Código Python para el ARDrone2 de Parrot.
 
-* Show video using Comupter Vision (cv2) and Numpy
-* Add callback to preprocessing the frame. Example with Canny
-* Pitch, Roll, Yaw and Gaz with the joystick (need joystick with
-  four axes and twelve buttons)
-    * Flat Trim: button 5
-    * Calibrate magnetromes: button 6
-    * Emergency: button 7
-    * Exit: button 8
-    * Land: Button 9 (select)
-    * Take Off: button 10 (start)
-    * Pitch, Roll: axis 1 and 2
-    * Gaz, Yaw: axis 3 and 4
+* Despliega el video utilizando OpenCV (cv2) y Numpy
+* Permite función de callback para preprocesar el video (por ejemplo con Canny)
+* Pitch, Roll, Yaw and Gaz con joystick (4 ejes/12 botones)
+    * Ajuste Horizontal: botón 5
+    * Calibrar magnetrónomos: botón 6
+    * Emergencia: botón 7
+    * Salir: botón 8
+    * Aterrizar: botón 9 (select)
+    * Despegar: botón 10 (start)
+    * Pitch, Roll: ejes 1 and 2
+    * Gaz, Yaw: ejes 3 and 4
 * TODO
-    * Implement AT Commands listed at the end of ATCommand.py
-    * Implement Config commands listed in the Developer Guide Chapter 8
-    * Parse Options blocks in NavData
+    * Implementar controla través del teclado
+    * Implementar los comandos AT listados al final del archivo ATCommand.py
+    * Implementar los comandos de configuración listados en el Developer Guide Capítulo 8
+    * Interpretar el resto de los Options blocks en NavData
 
 
 ChangeLog
 =========
+17 Nov 2014
+
+* Se cambian los mensajes al español
+* Reestructura los directorios
+
+
 08 Jul 2014
 
 * ATCommand.py
-    * Add SetARDroneName()
+    * Agrega SetARDroneName()
 
 * NavData.py
-    * Parse options blocks
+    * Parses options blocks
 
 * ARDrone2.py
-    * Add Options blocks data
-    * Add SetARDroneName()
-    * If videoCallback is null then no video is processed
+    * Agrega Options blocks data
+    * Agrega SetARDroneName()
+    * Si videoCallback es null entonces no se procesa video
 
 
 22 May 2014
 
 * ATCommand.py
-    * Fix documentation in SetNavData()
+    * Corrige documentación en SetNavData()
 
 * Video.py
-    * Dimensions for the image have no effects
-    * Show FPS
+    * Dimensiones de la imagen no tienen efecto
+    * Muestra los FPS
 
 * ARDrone2.py
-    * Add Move() method
-    * Add Hover method
+    * Agrega el método Move()
+    * Agrega el método Hover()
 
 * Test01.py
-    * Rewrite application
-    * Add joystick support
-    * Now you can fly using the joystick
+    * Se reescribe la aplicación
+    * Agrega soporte para joystick
+
 

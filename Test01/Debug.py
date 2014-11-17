@@ -3,13 +3,13 @@ import threading
 import time
 
 class Debug:
-    """Class to debug in a thread safe way
+    """Clase para depurar de manera thread safe
 
-    Use Lock/Unlock to print messages
+    Utiliza Lock/Unlock para imprimir los mensajes
 
-    Usage:
+    Uso:
         d = Debug()
-        d.Print("Some message")
+        d.Print("Mensaje...")
     """
     def __init__(self):
         """Constructor
@@ -17,21 +17,24 @@ class Debug:
         self._lock = threading.Lock()
 
     def _Lock(self):
-        """Acquire the lock
+        """Adquiere el lock
         """
         self._lock.acquire()
 
     def _Unlock(self):
-        """Release the lock
+        """Libera el lock
         """
         self._lock.release()
 
     def Print(self, arg):
-        """Print the argument
+        """Imprime el argumento
 
         Args:
-            arg: text to print
+            arg: texto a imprimir
         """
         self._Lock()
-        print("%015.2f %s" % (time.time(), arg))
+        try:
+            print(("%015.2f %s" % (time.time(), arg)).decode("utf-8"))
+        except:
+            print("%015.2f %s" % (time.time(), arg))
         self._Unlock()
