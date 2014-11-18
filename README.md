@@ -15,7 +15,7 @@ Código Python para el ARDrone2 de Parrot.
     * Pitch, Roll: ejes 1 and 2
     * Gaz, Yaw: ejes 3 and 4
 * TODO
-    * Implementar controla través del teclado
+    * Implementar control a través del teclado
     * Implementar los comandos AT listados al final del archivo ATCommand.py
     * Implementar los comandos de configuración listados en el Developer Guide Capítulo 8
     * Interpretar el resto de los Options blocks en NavData

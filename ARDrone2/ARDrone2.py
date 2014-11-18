@@ -332,7 +332,7 @@ class ARDrone2:
             self._Unlock()
 
     def Stop(self):
-        """"Stop all the threads
+        """Stop all the threads
         """
         self._debug.Print("[ARDrone2]: Stopping...")
         self._navData.Stop()

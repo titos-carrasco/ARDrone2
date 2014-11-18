@@ -7,11 +7,11 @@ import time
 import cv2
 import numpy as np
 
-from Debug import Debug
 from VJoy import VJoy
 
 sys.path.append('../ARDrone2')
 from ARDrone2 import ARDrone2
+from Debug import Debug
 
 
 class MyApp:
@@ -26,11 +26,9 @@ class MyApp:
 
         # nos conectamos al ARDrone2 especificando los callback
         try:
-            drone = ARDrone2("192.168.1.1", debug, self.NavData,
-                              self.VideoFilter)
+            drone = ARDrone2("192.168.1.1", debug, None, self.VideoFilter)
         except Exception as e:
-            debug.Print("[MainApp]: No hay conexión al ARDrone. " +
-                         "Quizás la dirección/hostname es incorrecta...")
+            debug.Print("[MainApp]: No hay conexión al ARDrone. Quizás la dirección/hostname es incorrecta...")
             return
 
         # lo ponemos en modo navdata
@@ -62,8 +60,7 @@ class MyApp:
                     #print("drone.Hover()")
                     drone.Hover()
                 else:
-                    #print("drone.Move(%f, %f, %f, %f)" % (flyRoll, flyPitch,
-                    #                                      flyGaz, flyYaw))
+                    #print("drone.Move(%f, %f, %f, %f)" % (flyRoll, flyPitch, flyGaz, flyYaw))
                     drone.Move(flyRoll, flyPitch, flyGaz, flyYaw)
 
                 time.sleep(0.01)
@@ -91,8 +88,7 @@ class MyApp:
     def NavData(self, droneState, options):
         pass
 
-    # filtramos el video cuadro a cuadro aplicando Canny para la detecció
-    # de bordes
+    # filtramos el video cuadro a cuadro aplicando Canny para la detección de bordes
     def VideoFilter(self, img):
         imgH, imgW, depth = img.shape
         frame = img.copy()

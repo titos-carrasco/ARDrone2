@@ -44,8 +44,7 @@ class VJoy:
             self._jnum = jnum
             self._joystick = pygame.joystick.Joystick(jnum)
             self._joystick.init()
-            self._debug.Print("[VJoy]: Utilizando joystick #%d"
-                              % jnum)
+            self._debug.Print("[VJoy]: Utilizando joystick #%d" % jnum)
 
     def GetCommand(self):
         cmd = self.IDLE
@@ -54,8 +53,7 @@ class VJoy:
                 events = pygame.event.get()
                 for event in events:
                     # botones del joystick
-                    if(event.type==pygame.JOYBUTTONDOWN and
-                       event.joy == self._jnum):
+                    if(event.type==pygame.JOYBUTTONDOWN and event.joy == self._jnum):
                         if(event.button==4):
                             cmd = self.FLAT_TRIM
                         elif(event.button==5):
@@ -69,8 +67,7 @@ class VJoy:
                         elif(event.button==9):
                             cmd = self.TAKE_OFF
                     # movimiento en los ejes
-                    elif(event.type == pygame.JOYAXISMOTION and
-                         event.joy == self._jnum):
+                    elif(event.type == pygame.JOYAXISMOTION and event.joy == self._jnum):
                         axis = event.axis
                         value = int(round(event.value, 0))
                         if(axis==0):
@@ -89,7 +86,6 @@ class VJoy:
         move.pitch = self._pitch
         move.yaw = self._yaw
         move.gaz = self._gaz
-        # retornamos el comando asociado al botón presionado y el
-        # movimiento en los ejes
+        # retornamos el comando asociado al botón presionado y el movimiento en los ejes
         return (cmd, move)
 

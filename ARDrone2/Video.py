@@ -5,13 +5,13 @@ import cv2
 import numpy
 
 class Video:
-    """Class to receive Video from port 5555
+    """Clase para recibir video desde la puerta 5555
 
-    Use Computer Vision 2 Library
+    Utiliza la librería OpenCV (cv2)
 
-    Usage:
+    Uso:
         def callback(frame):
-            ... process frame
+            ... procesar frame
 
         debug = Debug()
         video = Video("192.168.1.1", callback, debug)
@@ -20,24 +20,24 @@ class Video:
     """
     VIDEO_PORT = 5555
 
-    # Class errors
+    # tipos de errores
     ERR_UNEXPECTED_EXCEPTION = 1
 
     ERR_MESSAGE = [0]*2
-    ERR_MESSAGE[ERR_UNEXPECTED_EXCEPTION] = "Unexpected Exception"
+    ERR_MESSAGE[ERR_UNEXPECTED_EXCEPTION] = "Excepción no esperada"
 
     def __init__(self, address, callback, debug):
         """Constructor
 
         Args:
-            adress: Drone's address/hostname
-            callback: Method to call when receive a frame.
+            address: dirección/hostname del drone
+            callback: método a invocar cuando se recibe un frame
                       def callback(frame)
                         ....
-            debug: Debug object
+            debug: objeto de debug
 
         Throws:
-            Exception if can't read first frame
+            Exception si no puede leer el primer frame
         """
         self._address = address
         self._callback = callback
@@ -49,13 +49,13 @@ class Video:
             #self._cap.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, 480)
             ret, img = self._cap.read()
             if(not ret):
-                msg = "Can't read video from the drone"
+                msg = "No se puede leer el video desde el drone"
                 self._debug.Print("[Video]: %s" % msg)
                 raise Exception(msg)
             self._winName = "ARDrone2 Video"
             cv2.namedWindow(self._winName, cv2.CV_WINDOW_AUTOSIZE)
         except NameError as e:
-            # no cleanup code required
+            # no se requiere código de limpieza
             self._debug.Print("[Video]: %s" % e)
             raise
         except Exception as e:
@@ -70,7 +70,7 @@ class Video:
             time.sleep(0.01)
 
     def _TVideo(self, *args):
-        """Thread to process the video from the drone
+        """Hilo para procesar el video del drone
         """
         self._running = True
         t1=cv2.getTickCount()
@@ -92,7 +92,7 @@ class Video:
         self._debug.Print("[TVideo]: Aborting the thread")
 
     def Stop(self):
-        """Stop Video thread
+        """Detiene el hilo del video
         """
         self._running = False
         self._tvideo.join()
